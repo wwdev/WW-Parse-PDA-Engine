@@ -1,0 +1,17 @@
+^_build
+^Build$
+^blib
+~$
+\.bak$
+\.swp$
+\.kate-swp$
+^MANIFEST\.SKIP$
+^.git
+
+^MYMETA\.yml$
+^MYMETA\.json$
+^dev-perl
+^make-tar\.sh$
+^update-ebuild\.sh$
+^ignore\.txt$
+

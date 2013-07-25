@@ -1,0 +1,17 @@
+Build.PL
+Changes
+lib/WW/Parse/PDA/Engine.pm
+lib/WW/Parse/PDA/ExecCtx.pm
+lib/WW/Parse/PDA/OpDef.pm
+lib/WW/Parse/PDA/OpDefs.pm
+lib/WW/Parse/PDA/ParserBase.pm
+lib/WW/Parse/PDA/Trace.pm
+lib/WW/Parse/PDA/TraceConsts.pm
+lib/WW/Parse/PDA/VarSetOps.pm
+LICENSE
+Makefile.PL
+MANIFEST
+META.json
+META.yml
+README
+t/00-load.t
