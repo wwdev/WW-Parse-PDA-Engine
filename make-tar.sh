@@ -3,7 +3,7 @@ bin_dir=$(realpath $(dirname "$0"))
 cd "$bin_dir"
 
 P='WW-Parse-PDA-Engine'
-V='0.12.0'
+V='0.12.1'
 PV="$P-$V"
 
 rm -rf "/tmp/root/$PV"

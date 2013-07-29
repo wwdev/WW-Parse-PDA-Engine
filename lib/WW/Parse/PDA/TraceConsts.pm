@@ -2,7 +2,25 @@ package WW::Parse::PDA::TraceConsts;
 use feature qw(:5.12);
 use strict;
 
-our $VERSION = '0.01';
+=pod
+
+=head1 NAME
+
+WW::Parse::PDA::TraceConsts - Trace Control Constants
+
+=head1 DESCRIPTION
+
+This package defines constants for controlling trace output.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2013 by Lee Woodworth. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
+our $VERSION = '0.12.1';
 
 sub TRACE_FLAGS_MATCH()        { 1 }
 sub TRACE_FLAGS_RULE()         { 2 }

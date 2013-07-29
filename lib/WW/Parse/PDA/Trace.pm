@@ -2,6 +2,24 @@ package WW::Parse::PDA::Trace;
 use feature qw(:5.12);
 use strict;
 
+=pod
+
+=head1 NAME
+
+WW::Parse::PDA::Trace - Parsing Op Tracer
+
+=head1 DESCRIPTION
+
+This class generates tracing output from a parsing context.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2013 by Lee Woodworth. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
 use Scalar::Util qw( refaddr reftype );
 use WW::Parse::PDA::TraceConsts qw( :all );
 
@@ -163,14 +181,14 @@ sub _trace_match_status {
     my ($self, $ctx) = @_;
     my $ofh = $self->ofh;
     my $line = '   Prev Match: ***** ' . ($ctx->match_status ? 'OK  ' : 'FAIL') . ' *****';
-    my $value = $ctx->last_match;
+    my $value = $ctx->match_value;
     $line .= ref ($value) || length ($value) > 20 ? 
         ' ' . _perl_value_str ($value, 80) . 
-            ($ctx->bt_slots ? "\n" . (' ' x 14) : '') :
+            ($ctx->value_slots ? "\n" . (' ' x 14) : '') :
         ' ' . _perl_value_str ($value, 20) . ' ';
 
-    if (my $slots = $ctx->bt_slots) {
-        $line .= ' BT/ITER [';
+    if (my $slots = $ctx->value_slots) {
+        $line .= ' VALUE [';
         my $i = 0;
         for (@$slots) {
             $line .= ' ' if $i++;

@@ -2,15 +2,86 @@ package WW::Parse::PDA::OpDefs;
 use feature qw(:5.12);
 use strict;
 
+=pod
+
+=head1 NAME
+
+WW::Parse::PDA::OpDefs - Standard Parsing Ops
+
+=head1 DESCRIPTION
+
+This package defines the functions implementing the standard parsing ops. It also
+defines meta data describing the ops.
+
+=head1 EXPORTS
+
+Nothing is exported by default.
+
+=head2 parse_position_ident ($ctx)
+
+This function returns a position identification string for the parsing context's
+current position (includes line number and character position in the line).
+
+=head2 _fatal_error_msg ($ctx, $msg_params)
+
+This function sets the error message in the parsing context and returns a value
+that will cause the parsing engine to immediately halt. The error message will
+have position information appended at the end.
+
+An example use:
+
+    return _fatal_error_msg ($ctx, ['value of range'])
+        if $ctx->match_value} > 255;
+
+=over 4
+
+=item $ctx - parsing context
+
+The parsing context
+
+=item $msg_params - array ref of strings
+
+This array contains strings to be concatenated to form the error message.
+
+=back
+
+=head2 PDA_ENGINE_VERSION 
+
+This function returns the parse op defs version as a string of the form 'major.minor.rev'.
+For example '0.12.1'.
+
+=head2 get_op_defs
+
+This function returns an array ref of WW::Parse::PDA::OpDef objects. The op defs
+describe the standard paring ops defined in this package.
+
+=head1 EXPORT TAGS
+
+=over 4
+
+=item :all - all of the exports
+
+=item :op_helpers - parse_position_ident and _fatal_error_msg
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2013 by Lee Woodworth. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
 use Scalar::Util qw( reftype );
 
 use WW::Parse::PDA::OpDef;
 use WW::Parse::PDA::VarSetOps qw( :all );
 use WW::Parse::PDA::TraceConsts qw( :all );
 
-our $VERSION = '0.012000';
-our $MIN_COMPAT_VERSION = '0.012000';
-sub PDA_ENGINE_VERSION() { '0.012000' };
+our $VERSION = '0.012001';
+our $MIN_COMPAT_VERSION = '0.012001';
+sub PDA_ENGINE_VERSION() { '0.012001' };
 
 #-------------------------------------------------------------------------------
 
@@ -70,7 +141,7 @@ sub fail($$$) {
 sub _var_get($$) {
     my ($ctx, $var_name) = @_;
     for ($var_name) {
-        when ('*last_match*')       { return $ctx->{last_match}; }
+        when ('*match_value*')       { return $ctx->{match_value}; }
         when ($_ =~ m/^[*]([\d])/)  {
             my $index = int ($1);
             return $ctx->{registers} ? $ctx->{registers}->[$index] : undef; 
@@ -99,8 +170,8 @@ sub _var_set($$$$) {
 
     my $var_name = $ctx->{LITERAL_LIST}->[$var_name_index];
     my $dest_ref;
-    if ($var_name eq '*last_match*') { 
-        $dest_ref = \($ctx->{last_match}); 
+    if ($var_name eq '*match_value*') { 
+        $dest_ref = \($ctx->{match_value}); 
     }
     elsif ($var_name =~ m/^[*]([\d])/) {
         my $index = int ($1);
@@ -194,7 +265,7 @@ sub _fatal_error_msg($$) {
     my $msg = '';
     for (@$msg_params) {
         when ('$$') {
-            $msg .= $ctx->last_match if defined $ctx->last_match;
+            $msg .= $ctx->match_value if defined $ctx->match_value;
         }
         when ($_ =~ /^[\$][\$]r(\d)$/) {
             my $reg = $ctx->register (int ($1));
@@ -245,7 +316,7 @@ sub set_rule_vars($$$) {
 sub ok_return($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     $ctx->{match_status} = 1;
-    $ctx->{last_match} = undef unless $ctx->{set_match_value};
+    $ctx->{match_value} = undef unless $ctx->{set_match_value};
     $op_index = $ctx->{ok_return};
     $ctx->pop_saved if $op_index >= 0;
     return $op_index;
@@ -255,10 +326,10 @@ sub hash_return($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     $ctx->{match_status} = 1;
     if ($ctx->{set_match_value}) {
-        $ctx->{last_match} = $ctx->{rule_vars};
+        $ctx->{match_value} = $ctx->{rule_vars};
     }
     else {
-        $ctx->{last_match} = undef;
+        $ctx->{match_value} = undef;
     }
 
     $op_index = $ctx->{ok_return};
@@ -272,10 +343,10 @@ sub pkg_return($$$) {
     if ($ctx->{set_match_value}) {
         my $node_pkg = $ctx->LITERAL_LIST->[$op_list->[$op_index + 1]];
         my $rule_vars = $ctx->{rule_vars};
-        $ctx->{last_match} = $node_pkg->new (%{$rule_vars || {}});
+        $ctx->{match_value} = $node_pkg->new (%{$rule_vars || {}});
     }
     else {
-        $ctx->{last_match} = undef;
+        $ctx->{match_value} = undef;
     }
 
     $op_index = $ctx->{ok_return};
@@ -286,7 +357,7 @@ sub pkg_return($$$) {
 sub fail_return($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     $ctx->{match_status} = undef;
-    $ctx->{last_match} = undef;
+    $ctx->{match_value} = undef;
 
     $op_index = $ctx->{fail_return};
     $ctx->pop_saved if $op_index >= 0;
@@ -321,11 +392,11 @@ sub literal_match($$$) {
         substr ($$text_ref, $offset, length ($cmp_str)) eq $cmp_str
     ) {
         pos ($$text_ref) = $offset + length ($cmp_str);
-        $ctx->{last_match} = $cmp_str;
+        $ctx->{match_value} = $cmp_str;
         $ctx->{match_status} = 1;
     }
     else {
-        $ctx->{last_match} = undef;
+        $ctx->{match_value} = undef;
         $ctx->{match_status} = undef;
     }
     return $op_index + 2;
@@ -464,7 +535,7 @@ sub var_set_op($$$) {
         $ctx,
         $op_list->[$op_index + 1],
         $op_list->[$op_index + 2],
-        $ctx->{match_status} ? $ctx->{last_match} : undef
+        $ctx->{match_status} ? $ctx->{match_value} : undef
     );
     return $op_index + 3;
 }
@@ -485,7 +556,7 @@ sub set_bt($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     my $text_ref = $ctx->{text_ref};
     my $slot     = $op_list->[$op_index + 1];
-    $ctx->{bt_slots}->[$slot] = pos ($$text_ref);
+    $ctx->{value_slots}->[$slot] = pos ($$text_ref);
     return $op_index + 2;
 }
 
@@ -493,7 +564,7 @@ sub goto_bt($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     my $text_ref = $ctx->{text_ref};
     my $slot     = $op_list->[$op_index + 1];
-    pos ($$text_ref) = $ctx->{bt_slots}->[$slot];
+    pos ($$text_ref) = $ctx->{value_slots}->[$slot];
     return $op_index + 2;
 }
 
@@ -501,7 +572,7 @@ sub set_iter_slot($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     my $slot  = $op_list->[$op_index + 1];
     my $value = $op_list->[$op_index + 2];
-    $ctx->{bt_slots}->[$slot] = $value;
+    $ctx->{value_slots}->[$slot] = $value;
     return $op_index + 3;
 }
 
@@ -509,7 +580,7 @@ sub add_iter_slot($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     my $slot  = $op_list->[$op_index + 1];
     my $value = $op_list->[$op_index + 2];
-    $ctx->{bt_slots}->[$slot] += $value;
+    $ctx->{value_slots}->[$slot] += $value;
     return $op_index + 3;
 }
 
@@ -517,7 +588,7 @@ sub gt_iter_slot($$$) {
     my ($ctx, $op_index, $op_list) = @_;
     my $slot  = $op_list->[$op_index + 1];
     my $value = $op_list->[$op_index + 2];
-    return ($ctx->{match_status} = $ctx->{bt_slots}->[$slot] > $value) ?
+    return ($ctx->{match_status} = $ctx->{value_slots}->[$slot] > $value) ?
         $op_list->[$op_index + 3] : $op_list->[$op_index + 4];
 }
 
@@ -528,7 +599,7 @@ sub key_match($$$) {
 
     my $text_ref = $ctx->{text_ref};
     my $offset   = pos ($$text_ref);
-    my $max_key = substr ($$text_ref, $offset, $key_lens->[0]);
+    my $max_key  = substr ($$text_ref, $offset, $key_lens->[0]);
 
     my ($key_len, $match_idx);
     for (@$key_lens) {
@@ -541,7 +612,7 @@ sub key_match($$$) {
     }
 
     $ctx->{match_status} = undef;
-    $ctx->{last_match}   = undef;
+    $ctx->{match_value}  = undef;
     return $op_list->[$op_index + 3];
 }
 
@@ -577,7 +648,7 @@ sub _make_expr_subtree($$$$$$$) {
             $ctx->{error_message} ||= 'expression subtree constructor error:' . _parse_position_ident ($ctx);
             return undef;
         }
-        return $ctx->{last_match};
+        return $ctx->{match_value};
     }
 
     return {
@@ -663,7 +734,7 @@ sub expr_op($$$) {
             substr ($$text_ref, $offset + $op_len, 1) =~ m/[_a-zA-Z0-9]/
     ) {
         $ctx->{match_status} = undef;
-        $ctx->{last_match}   = undef;
+        $ctx->{match_value}   = undef;
         return $op_index + 2;
     }
 
@@ -700,7 +771,7 @@ sub expr_tree($$$) {
     _expr_tree ($ctx, $op_index, $op_list, -2, $r5);
 
     $ctx->{match_status} = 1;
-    $ctx->{last_match} = $r5->[2];
+    $ctx->{match_value} = $r5->[2];
     return $op_index + 1;
 }
 
@@ -778,14 +849,12 @@ BEGIN {
         _mk_op_def ('var_set_op',       \&var_set_op,       'MATCH',            'var_name:Str', 'set_op:SetOp'),
         _mk_op_def ('var_move',         \&var_move,         'MATCH',            'var_name:Str', 'set_op:SetOp', 'src_name:Str'),
 
-        # TODO: just convert to one set of int slots for both backtracking nad iteration counting
-
         _mk_op_def ('set_bt',           \&set_bt,           'BT',               'slot_idx:Int'),
         _mk_op_def ('goto_bt',          \&goto_bt,          'BT',               'slot_idx:Int'),
 
         _mk_op_def ('set_iter_slot',    \&set_iter_slot,    'BT',               'slot_idx:Int', 'value:Int'),
         _mk_op_def ('add_iter_slot',    \&add_iter_slot,    'BT',               'slot_idx:Int', 'value:Int'),
-        _mk_op_def ('gt_iter_slot',     \&gt_iter_slot,     'BT',               'iter_slot:Int', 'value:Int', 'ok:OpIndex', 'fail:OpIndex'),
+        _mk_op_def ('gt_iter_slot',     \&gt_iter_slot,     'BT',               'slot_idx:Int', 'value:Int', 'ok:OpIndex', 'fail:OpIndex'),
     );
 
     @_OP_FUNCS_EXPORTS = map { $_->op_type } @_OP_DEFS;

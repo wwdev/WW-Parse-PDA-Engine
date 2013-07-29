@@ -1,6 +1,6 @@
 #!/bin/bash
 P="WW-Parse-PDA-Engine"
-V="0.12.0"
+V="0.12.1"
 PV="$P-$V"
 
 overlay_dir="/usr/local/portage/dev-perl/$P"

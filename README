@@ -1,14 +1,12 @@
 WW-Parse-PDA-Engine
 
 This package implements the runtime for a Push-Down-Automaton (PDA) parser.
-The parser engine (WW::Parse::PDA::Engine) uses tables to describe the
+The class C<< WW::Parse::PDA::Engine >> uses tables to describe the
 PDA that parses a particular grammar.
 
-See WW-ParserGen-PDA for the parser-gen-pda.pl script that builds the tables
-used by WW::Parse::PDA::Engine. See WW::Parse::PDA::ParserBase for subclassing
-to easily build a parser front end that uses WW::Parse::PDA::Engine.
-
-TO DO:  Document the public interface
+See L<WW-ParserGen-PDA> for the parser-gen-pda.pl script that builds the tables
+used by C<< WW::Parse::PDA::Engine >>. See L<WW::Parse::PDA::ParserBase> for a 
+base class to use for easily building a parser front end.
 
 INSTALLATION
 

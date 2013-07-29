@@ -2,7 +2,25 @@ package WW::Parse::PDA::VarSetOps;
 use feature qw(:5.12);
 use strict;
 
-our $VERSION = '0.03';
+=pod
+
+=head1 NAME
+
+WW::Parse::PDA::VarSetOps - Constants used by the variable assignment parsing ops
+
+=head1 DESCRIPTION
+
+This package defines constants for the variable assignment ops.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2013 by Lee Woodworth. All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+=cut
+
+our $VERSION = '0.12.1';
 
 sub VAR_SET_OP_SET()        { 0 }
 sub VAR_SET_OP_SETIF()      { 1 }

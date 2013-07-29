@@ -37,8 +37,8 @@ WW::Parse::PDA::ParserBase - Convenience base class for parser front-ends
 
 =head1 DESCRIPTION
 
-This class is a convience class for building parsers that use WW::Parse::PDA::Engine.
-The engine class uses a set of descriptive tables to parse a text string in one call.
+This class is a base class for building parsers that use C<< WW::Parse::PDA::Engine >>.
+The engine class uses a set of descriptive tables to parse a text string in one method call.
 See L<parser-gen-pda.pl> and L<WW::ParserGen::PDA> from the WW-ParserGen-PDA package
 for how to generate a Perl package containing the required tables.
 
@@ -46,58 +46,90 @@ The parse engine does recursive-descent processing of parse rules from a given
 starting rule. The parsing rules build an abstract syntax tree by returning class 
 object instances or hash refs as their match value.
 
+The parsing engine does not create a deep call stack even when parsing very deeply nested
+rules. The recursion is handled in the parsing context object, not the call stack.
+
 =head1 METHODS
+
+=head2 _parse_ops_pkg ($self)
+
+This method returns the fully qualified name of the package that defines the
+parsing tables used by C<< WW::Parse::PDA::Engine >>. It must be implemented by
+the subclass. This package is expected to to have certain class methods. The 
+easiest way to generate a parse ops package is to use C<< parser-gen-pda.pl >> from
+the C<< WW::ParserGen-PDA >> package.
+
+=head2 _parse_text ($self, $ident, $rule, $text_ref, $trace_flags, $global_data)
+
+This method returns the list C<< ($parse_result, $error_message) >>.
 
 =over 4
 
-=item _parse_ops_pkg ($self)
+=item $ident - string
 
-This method returns the fully qualified name of the package that defines the
-parsing tables used by WW::Parse::PDA::Engine. It must be implemented by
-the subclass.
+This is an identifying string for the source of the text being parsed, it is used in error messages.
 
-=item _parse_text ($self, $ident, $rule, $text_ref, $trace_flags, $global_data)
+=item $rule - string
 
-This method returns the list ($parse_result, $error_message). $ident is a string
-identifying the source of the text being parsed, it is used in error messages.
-$rule is a string with the name of the starting parse rule. The result value of
-this rule is is returned in $parse_result. $text_ref is reference to a string
-containing the text to be parsed. $trace_flags is an optional integer controlling
-tracing output. When true, trace output will be sent to STDERR as $text_ref is
-parsed. $global_data is optional perl value/object that will be made avaliable
-to parsing rules.
+This is a string with the name of the starting parse rule. The result value of
+this rule is is returned in C<< $parse_result >>.
 
-=item _parse_test ($self, $start_rule, $text_ref, $trace_flags, $global_data)
+=item $text_ref - ref to a string value
 
-This method returns the list ($status, $parse_result_or_error_message). The
-arguments are the same as _parse_text except that $ident is omitted. The
-intended use of this method for unit tests of the parser.
+This reference has the text to be parsed. It will not be modified.
 
-=item use_trace_package ($self, $trace_pkg_name, $trace_output_handle)
+=item $trace_flags - optional int or undef
+
+This value controls what kind of parsing output will be produced. When equal to 1, 
+trace output will be sent to C<< *STDERR >> as C<< $text_ref >> is parsed. Setting this
+value to 1 uses the default tracing package on the created parse engine. To have more control
+over the trace output, call C<< use_trace_package >> before calling C<< _parse_text >>.
+
+=item $global_data - optional perl value/object
+
+This value is made available to grammar-defined parse ops via C<< $ctx->global_data >>.
+Grammar-defined parse ops may use this value. The standard parse ops do not.
+
+=back
+
+=head2 _parse_test ($self, $start_rule, $text_ref, $trace_flags, $global_data)
+
+This method returns the list C<< ($status, $parse_result_or_error_message) >>. 
+See L<WW::Parse::PDA::Engine::parse_text> for the definition of the returned list. The
+method arguments are the same as _parse_text except that C<< $ident >> is omitted.
+Unit tests of the parser may find this method useful.
+
+=head2 use_trace_package ($self, $trace_pkg_name, $trace_output_handle)
 
 This method configures the parse engine instance to enable parse tracing.
-Trace is normally disabled as it substantially slows the parser down even
-when not producing trace output.
+Trace output is normally disabled as it substantially slows the parser down even
+when not producing trace output. See L<WW::Parse::PDA::Engine> for a full
+description of the arguments.
 
-$trace_pkg_name is an optional string containing the fully-qualified name
-of the package to use for generating trace output. The default is
-WW::Parse::PDA::Trace. $trace_output_handle is an IO::Handle compatible
-object (supports print and say) where trace output is written. The default
-is \*STDERR.
+=over 4
+
+=item $trace_pkg_name - optional string
+
+The fully qualified name of the package to use for generating trace output. The default is
+WW::Parse::PDA::Trace.
+
+=item $trace_output_handle - optional output handle
+
+Trace output is written to this handle. The default is C<< \*STDERR >>.
 
 =back
 
 =head1 BUGS
 
 The parse engine has only been tested with Perl 5.12 so it has been
-flagged to require 5.12 features. Earlier Perls mitgh work, but
+flagged to require 5.12 features. Earlier Perls might work, but
 they must be able to use Moose.
 
 None known at the moment.
 
 =head1 SEE ALSO
 
-parser-gen-pda.pl, WW::ParserGen::PDA from WW-ParserGen-PDA
+parser-gen-pda.pl and WW::ParserGen::PDA from WW-ParserGen-PDA
 
 =head1 COPYRIGHT
 
